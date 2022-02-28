@@ -23,7 +23,7 @@ def plot_predictions(data_inputs, expected_outputs, predicted_outputs, save=Fals
     plt.title(title)
 
     if save:
-        plt.savefig(title + '.png')
+        plt.savefig(f'{title}.png')
 
     plt.show()
 
@@ -65,6 +65,6 @@ def plot_metric(metric_train, metric_validation=None, xlabel='x', ylabel='y', ti
 
     plt.legend(legend, loc='upper left')
     if save:
-        plt.savefig(title + '.png')
+        plt.savefig(f'{title}.png')
     plt.show()
     plt.close()

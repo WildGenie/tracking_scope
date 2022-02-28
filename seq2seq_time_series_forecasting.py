@@ -146,11 +146,10 @@ def _create_stacked_rnn_cells(step: Tensorflow2ModelStep) -> List[GRUCell]:
    :param step: The base Neuraxle step for TensorFlow v2 (Tensorflow2ModelStep)
     :return: list of gru cells
     """
-    cells = []
-    for _ in range(step.hyperparams['layers_stacked_count']):
-        cells.append(GRUCell(step.hyperparams['hidden_dim']))
-
-    return cells
+    return [
+        GRUCell(step.hyperparams['hidden_dim'])
+        for _ in range(step.hyperparams['layers_stacked_count'])
+    ]
 
 #%% Create loss
 

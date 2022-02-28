@@ -6,6 +6,7 @@ Created on Thu Aug 20 10:09:50 2020
 
 Predicting sinusoidal waves
 """
+
 #%%Loading required libraries
 
 import math
@@ -39,7 +40,7 @@ for _ in range(n_samples):
     data= sig1.T #transposes de arrays
 
     batch_data.append(sig1) #append is used in list
-     
+
 
 batch_data = np.array(batch_data) #converted to an array
 #data_sin=batch_data.T
@@ -62,7 +63,7 @@ _ = plot_features.plot(subplots=True)
 column_indices = {i: i for i, name in enumerate(data_sin.columns)}
 
 n = len(data_sin) #sequence length
-train_data = data_sin[0:int(n*0.7)]
+train_data = data_sin[:int(n*0.7)]
 val_data = data_sin[int(n*0.7):int(n*0.9)]
 test_data= data_sin[int(n*0.9):]
 
@@ -266,18 +267,17 @@ for example_inputs, example_labels in w2.train.take(1):
 MAX_EPOCHS = 20
 
 def compile_and_fit(model, window, patience=2):
-  early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                    patience=patience,
-                                                    mode='min')
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                      patience=patience,
+                                                      mode='min')
 
-  model.compile(loss=tf.losses.MeanSquaredError(),
-                optimizer=tf.optimizers.Adam(),
-                metrics=[tf.metrics.MeanAbsoluteError()])
+    model.compile(loss=tf.losses.MeanSquaredError(),
+                  optimizer=tf.optimizers.Adam(),
+                  metrics=[tf.metrics.MeanAbsoluteError()])
 
-  history = model.fit(window.train, epochs=MAX_EPOCHS,
+    return model.fit(window.train, epochs=MAX_EPOCHS,
                       validation_data=window.val,
                       callbacks=[early_stopping])
-  return history
 
 #%% Wide window
 
@@ -309,10 +309,10 @@ baseline = Baseline(label_index=column_indices[1])
 baseline.compile(loss=tf.losses.MeanSquaredError(),
                  metrics=[tf.metrics.MeanAbsoluteError()])
 
-val_performance = {}
-performance = {}
-val_performance['Baseline'] = baseline.evaluate(single_step_window.val)
-performance['Baseline'] = baseline.evaluate(single_step_window.test, verbose=0)
+val_performance = {'Baseline': baseline.evaluate(single_step_window.val)}
+performance = {
+    'Baseline': baseline.evaluate(single_step_window.test, verbose=0)
+}
 
 wide_window.plot(baseline)
 #%% CNN

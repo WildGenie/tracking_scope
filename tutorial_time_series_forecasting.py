@@ -5,6 +5,7 @@ Created on Mon Aug 17 11:53:14 2020
 @author: Inês Fernandes
 """
 
+
 #Tutorial time series forecasting
 
 #%% importing libraries needed
@@ -151,14 +152,8 @@ _ = plt.xlabel('Frequency (log scale)')
 #We'll use a (70%, 20%, 10%) split for the training, validation, and test sets
 
 column_indices = {name: i for i, name in enumerate(df.columns)} #creating a dictionary with name of features and column indice
-#same as
-#column_indices = {}
-#for i, name in enumerate(df.columns):
-    #column_indices[name] = i
-
-
 n = len(df)
-train_df = df[0:int(n*0.7)]
+train_df = df[:int(n*0.7)]
 val_df = df[int(n*0.7):int(n*0.9)]
 test_df = df[int(n*0.9):]
 
@@ -425,11 +420,10 @@ baseline = Baseline(label_index=column_indices['T (degC)'])
 baseline.compile(loss=tf.losses.MeanSquaredError(),
                  metrics=[tf.metrics.MeanAbsoluteError()])
 
-val_performance = {}
-performance = {}
-val_performance['Baseline'] = baseline.evaluate(single_step_window.val)
-performance['Baseline'] = baseline.evaluate(single_step_window.test, verbose=0)
-
+val_performance = {'Baseline': baseline.evaluate(single_step_window.val)}
+performance = {
+    'Baseline': baseline.evaluate(single_step_window.test, verbose=0)
+}
 #The wide_window doesn't change the way the model operates. The model 
 #still makes predictions 1h into the future based on a single input time 
 #step. Here the time axis acts like the batch axis: Each prediction is 
@@ -444,7 +438,7 @@ wide_window
 #This expanded window can be passed directly to the same baseline model. 
 #This is possible because the inputs and labels have the same number of 
 #timesteps, and the baseline just forwards the input to the output:
-    
+
 print('Input shape:', single_step_window.example[0].shape)
 print('Output shape:', baseline(single_step_window.example[0]).shape)
 
@@ -457,7 +451,7 @@ wide_window.plot(baseline)
 #The simplest trainable model you can apply to this task is to insert 
 #linear transformation between the input and output. In this case the 
 #output from a time step only depends on that step:
-    
+
 linear = tf.keras.Sequential([
     tf.keras.layers.Dense(units=1)
 ])
@@ -479,10 +473,9 @@ def compile_and_fit(model, window, patience=2):
                 optimizer=tf.optimizers.Adam(),
                 metrics=[tf.metrics.MeanAbsoluteError()])
 
-  history = model.fit(window.train, epochs=MAX_EPOCHS,
+  return model.fit(window.train, epochs=MAX_EPOCHS,
                       validation_data=window.val,
                       callbacks=[early_stopping])
-  return history
 
 #Train the model and evaluate its performance
 
@@ -875,11 +868,10 @@ last_baseline = MultiStepLastBaseline()
 last_baseline.compile(loss=tf.losses.MeanSquaredError(),
                       metrics=[tf.metrics.MeanAbsoluteError()])
 
-multi_val_performance = {}
-multi_performance = {}
-
-multi_val_performance['Last'] = last_baseline.evaluate(multi_window.val)
-multi_performance['Last'] = last_baseline.evaluate(multi_window.val, verbose=0)
+multi_val_performance = {'Last': last_baseline.evaluate(multi_window.val)}
+multi_performance = {
+    'Last': last_baseline.evaluate(multi_window.val, verbose=0)
+}
 multi_window.plot(last_baseline)
 
 #Another simple approach is to repeat the previous day, assuming tomorrow
@@ -1042,16 +1034,12 @@ prediction, state = feedback_model.warmup(multi_window.example[0])
 prediction.shape
 
 def call(self, inputs, training=None):
-  # Use a TensorArray to capture dynamically unrolled outputs.
-  predictions = []
   # Initialize the lstm state
   prediction, state = self.warmup(inputs)
 
-  # Insert the first prediction
-  predictions.append(prediction)
-
+  predictions = [prediction]
   # Run the rest of the prediction steps
-  for n in range(1, self.out_steps):
+  for _ in range(1, self.out_steps):
     # Use the last prediction as input.
     x = prediction
     # Execute one lstm step.
@@ -1099,7 +1087,7 @@ plt.bar(x - 0.17, val_mae, width, label='Validation')
 plt.bar(x + 0.17, test_mae, width, label='Test')
 plt.xticks(ticks=x, labels=multi_performance.keys(),
            rotation=45)
-plt.ylabel(f'MAE (average over all times and outputs)')
+plt.ylabel('MAE (average over all times and outputs)')
 _ = plt.legend()
 
 for name, value in multi_performance.items():

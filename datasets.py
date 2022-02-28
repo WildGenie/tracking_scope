@@ -176,9 +176,7 @@ def load_currency(currency):
 
     time_to_values = sorted(data["bpi"].items())
     values = [val for key, val in time_to_values]
-    kept_values = values[1000:]
-
-    return kept_values
+    return values[1000:]
 
 
 def generate_data_v4(n_samples, window_size_future, window_size_past):

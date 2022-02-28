@@ -7,6 +7,7 @@ Created on Fri Aug 21 17:23:56 2020
 Model for predicting fish trajectory
 
 """
+
 #%% importing libraries
 
 import numpy as np
@@ -48,7 +49,7 @@ _ = plot_features.plot(subplots=True)
 column_indices = {name: i for i, name in enumerate(fish_df.columns)}#creating a dictionary of column names and indices   
 
 n = len(fish_df) #sequence length
-train_data = fish_df[0:int(n*0.7)]
+train_data = fish_df[:int(n*0.7)]
 val_data = fish_df[int(n*0.7):int(n*0.9)]
 test_data= fish_df[int(n*0.9):]
 
@@ -244,10 +245,9 @@ def compile_and_fit(model, window, patience=2):
                 optimizer=tf.optimizers.Adam(),
                 metrics=[tf.metrics.MeanAbsoluteError()])
 
-  history = model.fit(window.train, epochs=MAX_EPOCHS,
+  return model.fit(window.train, epochs=MAX_EPOCHS,
                       validation_data=window.val,
                       callbacks=[early_stopping])
-  return history
 
 #%% Wide window
 
@@ -282,12 +282,9 @@ print('Output shape:', conv_model(conv_window.example[0]).shape)
 
 history = compile_and_fit(conv_model, conv_window)
 
-val_performance = {}
-performance = {}
 IPython.display.clear_output()
-val_performance['Conv'] = conv_model.evaluate(conv_window.val)
-performance['Conv'] = conv_model.evaluate(conv_window.test, verbose=0)
-
+val_performance = {'Conv': conv_model.evaluate(conv_window.val)}
+performance = {'Conv': conv_model.evaluate(conv_window.test, verbose=0)}
 print("Wide window")
 print('Input shape:', wide_window.example[0].shape)
 print('Labels shape:', wide_window.example[1].shape)
@@ -371,16 +368,12 @@ def warmup(self, inputs):
 FeedBack.warmup = warmup
 
 def call(self, inputs, training=None):
-  # Use a TensorArray to capture dynamically unrolled outputs.
-  predictions = []
   # Initialize the lstm state
   prediction, state = self.warmup(inputs)
 
-  # Insert the first prediction
-  predictions.append(prediction)
-
+  predictions = [prediction]
   # Run the rest of the prediction steps
-  for n in range(1, self.out_steps):
+  for _ in range(1, self.out_steps):
     # Use the last prediction as input.
     x = prediction
     # Execute one lstm step.
@@ -400,11 +393,11 @@ def call(self, inputs, training=None):
 FeedBack.call = call
 
 history = compile_and_fit(feedback_model, multi_window)
- 
+
 IPython.display.clear_output()
 
-multi_val_performance = {}
-multi_performance = {}
-multi_val_performance['AR LSTM'] = feedback_model.evaluate(multi_window.val)
-multi_performance['AR LSTM'] = feedback_model.evaluate(multi_window.test, verbose=0)
+multi_val_performance = {'AR LSTM': feedback_model.evaluate(multi_window.val)}
+multi_performance = {
+    'AR LSTM': feedback_model.evaluate(multi_window.test, verbose=0)
+}
 multi_window.plot(feedback_model)
